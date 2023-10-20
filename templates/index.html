@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Χάρτης Κριτηρίων και Κατάταξης</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        #map {
+            height: 99vh;
+            width: 100%;
+        }
+
+        .menu {
+            position: absolute;
+            top: 20px;
+            left: 70px;
+            z-index: 9999;
+            background-color: #f9f9f9;
+            padding: 12px 16px;
+        }
+
+
+        .tooltip {
+            position: absolute;
+            top: -22px;
+            left: 25px;
+            background-color: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 9999;
+        }
+
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .form-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .dropdown {
+            position: absolute;
+            top: 30px;
+            right: 100px;
+            z-index: 9999;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 250px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            padding: 12px 16px;
+            right: 0.5px;
+            z-index: 9999;
+        }
+
+        .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+
+        .circle {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin-right: 5px;
+            border-radius: 50%;
+            border: 1px solid #000;
+            cursor: pointer;
+        }
+
+        .circle.active {
+            background-color: #000;
+        }
+
+        .submit-button {
+            margin-left: 5px;
+        }
+
+        .search-submit-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .info.legend {
+            bottom: 50px;
+            orientation: 'h';
+            padding: 6px 8px;
+            font: 16px/18px Arial, Helvetica, sans-serif;
+
+            background: white;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            width: auto;
+
+        }
+
+        .info.legend i {
+            display: none;
+
+        }
+
+        .legend span,
+        .legend label {
+            display: block;
+            opacity: 0.7;
+            text-align: center;
+            font-size: 80%;
+            margin: 0;
+        }
+
+        .color-box {
+            display: block;
+            margin: 0 auto;
+            width: 50px;
+            height: 30px;
+        }
+
+        .legend-value {
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .info-icon {
+            float: right;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <div class="menu">
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Αναζήτηση Δήμων">
+
+            <button id="submit-button" class="submit-button">Υποβολή</button>
+            <button id="csv-button" style="display:none">Αποτελέσματα</button>
+
+
+
+        </div>
+
+        <form id="municipality-form">
+
+            
+        </form>
+
+        <ul id="selected-municipalities"></ul>
+    </div>
+
+    <div class="dropdown">
+        <span class="dropdown-trigger"><i class="fas fa-bars  fa-2x"></i></span>
+
+        <div class="dropdown-menu">
+            <div class="circle-container">
+                <span class="circle active" id="Evcs"></span>
+                <span id="Evcs">Σταθμοί Φόρτισης Η/Ο</span>
+                <span class="info-icon" data-attribute="Evcs">!</span>
+
+            </div>
+
+            <div class="circle-container">
+                <span class="circle" id="CO2(tons/km^2)-circle"></span>
+                <span id="CO2(tons/km^2)-label">CO2(ετήσιοι τόνοι/τ.χλμ)</span>
+                <span class="info-icon" data-attribute="CO2">!</span>
+
+            </div>
+            <div class="circle-container">
+                <span class="circle" id="Companies-circle"></span>
+                <span id="Companies-label">Επιχειρήσεις</span>
+                <span class="info-icon" data-attribute="Companies">!</span>
+
+            </div>
+            <div class="circle-container">
+                <span class="circle" id="distance_from_sea-circle"></span>
+                <span id="distance_from_sea-label">Αποστ. απο θάλασσα(μέτρα)</span>
+                <span class="info-icon" data-attribute="distance_from_sea">!</span>
+
+            </div>
+            <div class="circle-container">
+                <span class="circle" id="mun_category"></span>
+                <span id="mun_category">Κόστος Εγκατάστασης και Συντήρησης</span>
+                <span class="info-icon" data-attribute="mun_category">!</span>
+
+            </div>
+            <div class="circle-container">
+                <span class="circle" id="Airports"></span>
+                <span id="Airports">Λιμάνια/Αεροδρόμια</span>
+                <span class="info-icon" data-attribute="airports">!</span>
+
+            </div>
+            <div class="circle-container">
+                <span class="circle" id="Finance"></span>
+                <span id="Finance">Επιδοτήσεις(€)</span>
+                <span class="info-icon" data-attribute="finance">!</span>
+
+            </div>
+            <div class="circle-container">
+                <span class="circle" id="Hotels"></span>
+                <span id="Hotels">Κλίνες ξενοδοχείων</span>
+                <span class="info-icon" data-attribute="hotels">!</span>
+
+            </div>
+            <div class="circle-container">
+                <span class="circle" id="Gas"></span>
+                <span id="Gas">Tιμή Βενζίνης(€)</span>
+                <span class="info-icon" data-attribute="gas">!</span>
+
+            </div>
+            <div class="circle-container">
+                <span class="circle" id="Houses"></span>
+                <span id="Houses">Πολυκατοικίες</span>
+                <span class="info-icon" data-attribute="houses">!</span>
+
+            </div>
+            <div class="circle-container">
+                <span class="circle" id="rank-circle"></span>
+                <span id="rank-label">Κατάταξη</span>
+                <span class="info-icon" data-attribute="rank">!</span>
+            </div>
+        </div>
+    </div>
+    <span id="legend"></span>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.1/chroma.min.js"></script>
+    <script>
+        var selectedMunicipalitiesRankData = [];
+        // Create the map
+        var map = L.map('map').setView([37.983810, 23.727539], 7);
+
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+            maxZoom: 18,
+        }).addTo(map);
+
+
+
+        var colors = chroma.scale(['#228B22', '#006400', '#ffeda0', '#FFD700', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026']).colors(10);
+
+   
+
+
+
+
+        // Retrieve the GeoJSON data 
+        fetch('/score_calc')
+
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                
+                var geojsonLayer;
+
+                //Create Legends
+                function updateLegend(attribute) {
+                    var existingLegend = document.querySelector('.legend');
+                    if (existingLegend) {
+                        existingLegend.parentNode.removeChild(existingLegend);
+                    }
+                    var legend = L.control({ position: 'bottomleft' });
+
+                    legend.onAdd = function (map) {
+                        var div = L.DomUtil.create('div', 'info legend');
+                        var labels = [];
+                        
+                        var thresholds = calculateColorThresholds(data, attribute); //legend based on attributes thresholds
+                        var colors = thresholds.map(function (threshold) {
+                            return getColor(threshold, thresholds);
+                        });
+                        if (attribute == 'Hotels') {
+                            var colors = chroma.scale(['#FFD700', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026', '#32CD32', '#006400']).colors(8);
+                            colors.unshift('#000000');
+                        }
+                        if (attribute == 'Houses') {
+                            var colors = chroma.scale(['#ffeda0', '#FFD700', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026', '#32CD32', '#006400']).colors(10);
+                            colors.unshift('#000000');
+                        }
+                        if (attribute == 'Evcs') {
+                            var colors = chroma.scale(['#ffeda0', '#FFD700', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026', '#32CD32', '#006400']).colors(10);
+                            colors.unshift('#000000');
+                        }
+                        if (attribute == 'Airports') {
+                            var colors = chroma.scale(['#800026', '#006400']).colors(2);
+                            colors.unshift('#000000');
+
+                        }
+
+
+                        if (attribute !== 'Airports' && attribute !== 'mun_category' && attribute !== 'rank' && attribute !== 'Hotels' && attribute !== 'Houses' && attribute !== 'Evcs') {
+                            var featureContainsZero = data.features.some(function (feature) {
+                                return feature.properties[attribute] === 0;
+                            });
+
+                            if (featureContainsZero) {
+                                colors.unshift('#000000');
+                                thresholds.unshift(0); // Add black color at the beginning
+                            }
+                        }
+
+                        // Add the colors and thresholds to the legend
+                        for (var i = 0; i < colors.length; i++) {
+
+                            if (attribute == 'Gas') {
+                                var value = thresholds[i];
+                            }
+                            else if (attribute == 'Evcs') {
+                                var evthershold = [0, 5, 10, 20, 30, 40, 50, 60, 70, 80, 578]
+                                var value = evthershold[i]
+                            }
+                            else {
+                                var value = parseInt(thresholds[i]);
+                            }
+                            
+                            labels.push('<div class="legend-item"><span class="legend-value">' + value + '</span><span class="color-box" style="background:' + colors[i] + '"></span></div>');
+
+                        }
+
+                        div.innerHTML = labels.join('<br>');
+                        return div;
+                    };
+
+
+                    legend.addTo(map);
+                }
+
+                updateLegend('Evcs');
+
+
+
+                // Give the colors based on the thresholds
+                function getColor(value, thresholds) {
+                    var attribute = document.querySelector('.circle.active').id.split('-')[0];
+                    var colors = chroma.scale(['#ffeda0', '#FFD700', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026', '#32CD32', '#006400']).colors(10);
+                    if (attribute == 'Airports') {
+                        colors = chroma.scale(['#000000', '#800026', '#006400']).colors(3);
+                        return colors[value];
+                    }
+                    if (attribute == 'mun_category') {
+                        colors = chroma.scale(['#bd0026', '#800026', '#32CD32', '#006400']).colors(4);
+                        return colors[value - 1];
+                    }
+
+                    if (attribute == 'rank') {
+                        var colors = chroma.scale(['#ffeda0', '#FFD700', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026', '#32CD32', '#006400']).colors(10).reverse();
+                        for (var i = 0; i < thresholds.length; i++) {
+                            if (value <= thresholds[i]) {
+                                return colors[i];
+                            }
+
+                        }
+                        return colors[value - 1];
+                    }
+
+                    if (attribute == 'Hotels') {
+                        var colors = chroma.scale(['#000000', '#ffeda0', '#FFD700', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026', '#32CD32', '#006400']).colors(10);
+                        for (var i = 0; i < thresholds.length; i++) {
+                            if (value <= thresholds[i]) {
+                                return colors[i];
+                            }
+
+                        }
+                        return colors[value - 1];
+                    }
+
+                    if (attribute === 'Houses') {
+                        if (value == 0) return '#000000';
+                        if (value > 0 && value <= 20) return '#ffeda0';
+                        if (value > 20 && value <= 60) return '#FFD700';
+                        if (value > 60 && value <= 150) return '#feb24c';
+                        if (value > 150 && value <= 300) return '#fd8d3c';
+                        if (value > 300 && value <= 500) return '#fc4e2a';
+                        if (value > 500 && value <= 700) return '#e31a1c';
+                        if (value > 700 && value <= 1000) return '#bd0026';
+                        if (value > 1000 && value <= 2000) return '#800026';
+                        if (value > 2000 && value <= 4000) return '#32CD32';
+                        if (value > 4000) return '#006400';
+                        
+
+
+
+                        return colors[value - 1];
+                    }
+                    if (attribute === 'Evcs') {
+                        if (value == 0) return '#000000';
+                        if (value > 0 && value <= 5) return '#ffeda0';
+                        if (value > 5 && value <= 10) return '#FFD700';
+                        if (value > 10 && value <= 20) return '#feb24c';
+                        if (value > 20 && value <= 30) return '#fd8d3c';
+                        if (value > 30 && value <= 40) return '#fc4e2a';
+                        if (value > 40 && value <= 50) return '#e31a1c';
+                        if (value > 50 && value <= 60) return '#bd0026';
+                        if (value > 60 && value <= 70) return '#800026';
+                        if (value > 70 && value <= 80) return '#32CD32';
+                        if (value > 80) return '#006400';
+                        
+
+
+
+                        return colors[value - 1];
+                    }
+                    if (attribute === 'CO2(tons/km^2)') {
+                        
+                        if (value > 0 && value <= 100) return '#ffeda0';
+                        if (value > 100 && value <= 150) return '#FFD700';
+                        if (value > 150 && value <= 250) return '#feb24c';
+                        if (value > 250 && value <= 400) return '#fd8d3c';
+                        if (value > 400 && value <= 600) return '#fc4e2a';
+                        if (value > 600 && value <= 800) return '#e31a1c';
+                        if (value > 800 && value <= 1000) return '#bd0026';
+                        if (value > 1000 && value <= 2000) return '#800026';
+                        if (value > 2000 && value <= 4000) return '#32CD32';
+                        if (value > 4000) return '#006400';
+                        
+
+
+
+                        return colors[value - 1];
+                    }
+
+
+                    if (value === 0) {
+                        return '#000000'; // Return black for zero values
+                    }
+
+                    
+                    for (var i = 0; i < thresholds.length; i++) {
+                        if (value <= thresholds[i]) {
+                            return colors[i];
+                        }
+                    }
+
+                    return colors[colors.length - 1]; // Return the last color for values greater than the highest threshold
+                }
+
+                //Thresholds for the attributes
+                function calculateColorThresholds(data, property) {
+                    var attribute = document.querySelector('.circle.active').id.split('-')[0];
+
+                    var values = data.features.map(function (feature) {
+                        return feature.properties[property];
+                    });
+
+
+
+                    values.sort(function (a, b) {
+                        return a - b;
+                    });
+
+                    var thresholds = [];
+                    var segmentSize = Math.floor(values.length / 10); 
+                    if (attribute == 'Airports') {
+                        for (var i = 0; i <= 2; i++) {
+                            thresholds.push(i);
+                        }
+
+                    }
+                    else if (attribute == 'mun_category') {
+                        for (var i = 1; i <= 4; i++) {
+                            thresholds.push(i);
+                        }
+
+                    }
+                    else if (attribute == 'rank') {
+                        for (var i = 1; i <= 10; i++) {
+                            thresholds.push(values[i * segmentSize - 1]);
+                        }
+
+                    }
+                    else if (attribute === 'Hotels') {
+                        thresholds.push(0)
+                        for (var i = 3; i <= 10; i++) {
+                            thresholds.push(values[i * segmentSize - 1]);
+                        }
+
+
+                    }
+
+                    else if (attribute === 'Houses') {
+                        thresholds = [0, 20, 60, 150, 300, 500, 700, 1000, 2000, 4000, 35409];
+                    
+                    } else if (attribute === 'CO2(tons/km^2)') {
+                        thresholds = [ 100, 150, 250, 400, 600, 800, 1000, 2000, 4000, 136267];
+                    }
+
+                    // Create thresholds at the upper limit of each segment
+                    else {
+                        for (var i = 1; i <= 10; i++) {
+                            thresholds.push(values[i * segmentSize - 1]);
+                        }
+                    }
+
+                    return thresholds;
+
+
+
+                }
+
+                // Style function for GeoJSON layer
+                function style(feature) {
+                    var attribute = document.querySelector('.circle.active').id.split('-')[0];
+                    var colorScale = getColorScale(attribute);
+                    var thresholds = getColorThresholds(attribute);
+
+                    return {
+                        fillColor: getColor(feature.properties[attribute], thresholds, colorScale),
+                        weight: 1,
+                        color: '#000',
+                        fillOpacity: 0.7
+                    };
+                }
+
+
+
+                // Columns names
+                var attributes = ['rank', 'Evcs', 'CO2(tons/km^2)', 'distance_from_sea', 'Companies', 'mun_category', 'Airports', 'Finance', 'Hotels', 'Gas', 'Houses'];
+                //Rename the columns
+                var attributeLabels = {
+                    'rank': 'Κατάταξη',
+                    'Evcs': 'Σταθμοί Φόρτισης Η/Ο',
+                    'CO2(tons/km^2)': 'CO2(ετήσιοι τόνοι/τ.χλμ)',
+                    'distance_from_sea': 'Απόσταση από θάλασσα(μέτρα)',
+                    'Companies': 'Επιχειρήσεις',
+                    'mun_category': 'Κόστος Εγκατάστασης και Συντήρησης',
+                    'Airports': 'Λιμάνια/Αεροδρόμια',
+                    'Finance': 'Επιδοτήσεις(€)',
+                    'Hotels': 'Κλίνες Ξενοδοχείων',
+                    'Gas': 'Τιμή Βενζίνης(€)',
+                    'Houses': 'Πολυκατοικίες'
+                };
+
+                var colorScales = {};
+                var numColors = {};
+                var thresholds = {};
+                attributes.forEach(function (attribute) {
+
+                    thresholds[attribute] = calculateColorThresholds(data, attribute);
+                });
+                // Create initial GeoJSON layer
+                geojsonLayer = L.geoJSON(data, {
+                    style: style,
+                    onEachFeature: function (feature, layer) {
+                        //show boarders and values based on attribute when mouseover
+                        layer.on('mouseover', function () {
+                            var attribute = document.querySelector('.circle.active').id.split('-')[0];
+                            var value = feature.properties[attribute];
+                            var label = attributeLabels[attribute];
+                            layer.setStyle({
+                                weight: 3,
+                                color: '#000'
+                            });
+
+                            layer.bindTooltip('<b>' + feature.properties.d_1 + '</b><br>' + label + ': ' + value);
+                            layer.openTooltip();
+                        });
+
+                        layer.on('mouseout', function () {
+                            layer.setStyle({
+                                weight: 1,
+                                color: '#000'
+                            });
+
+                            layer.unbindTooltip();
+                        });
+                    }
+                }).addTo(map);
+
+                // Generate municipality checkboxes based on search input
+                var searchInput = document.getElementById('search-input');
+                var municipalityForm = document.getElementById('municipality-form');
+                var submitButton = document.getElementById('submit-button');
+
+                // Store the state of the checkboxes
+                var selectedMunicipalities = [];
+                //Function to hide the checkboxes
+                function hideSelectedItems() {
+                    var municipalityCheckboxes = document.querySelectorAll('input[name="municipality"]');
+                    municipalityCheckboxes.forEach(function (checkbox) {
+                        if (selectedMunicipalities.includes(checkbox.value)) {
+                            checkbox.parentNode.style.display = 'none';
+                        }
+                    });
+                }
+                function showAllItems() {
+                    var municipalityCheckboxes = document.querySelectorAll('input[name="municipality"]');
+                    municipalityCheckboxes.forEach(function (checkbox) {
+                        checkbox.parentNode.style.display = 'block';
+                    });
+                }
+
+
+                function generateCheckboxes(searchText) {
+                    var filteredMunicipalities = data.features.filter(function (feature) {
+                        return feature.properties.d_1.toLowerCase().includes(searchText.toLowerCase());
+
+                    });
+
+                    municipalityForm.innerHTML = '';
+
+                    // Add the checkboxes for the checked municipalities
+                    selectedMunicipalities.forEach(function (municipality) {
+                        var checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.name = 'municipality';
+                        checkbox.value = municipality;
+                        checkbox.checked = true;
+
+                        municipalityForm.appendChild(checkbox);
+
+                        var label = document.createElement('label');
+                        label.textContent = municipality;
+                        municipalityForm.appendChild(label);
+
+                        var br = document.createElement('br');
+                        municipalityForm.appendChild(br);
+
+                        checkbox.addEventListener('change', function () {
+                            if (!this.checked) {
+                                var index = selectedMunicipalities.indexOf(municipality);
+                                if (index !== -1) {
+                                    selectedMunicipalities.splice(index, 1);
+                                }
+                            }
+                        });
+                    });
+
+                    // Add the filtered municipalities if there are 7 or fewer matches
+                    if (filteredMunicipalities.length <= 7) {
+                        filteredMunicipalities.forEach(function (municipality) {
+                            var checkbox = document.createElement('input');
+                            checkbox.type = 'checkbox';
+                            checkbox.name = 'municipality';
+                            checkbox.value = municipality.properties.d_1;
+                            checkbox.checked = selectedMunicipalities.includes(municipality.properties.d_1);
+
+                            municipalityForm.appendChild(checkbox);
+
+                            var label = document.createElement('label');
+                            label.textContent = municipality.properties.d_1;
+                            municipalityForm.appendChild(label);
+
+                            var br = document.createElement('br');
+                            municipalityForm.appendChild(br);
+
+                            checkbox.addEventListener('change', function () {
+                                if (this.checked) {
+                                    selectedMunicipalities.push(municipality.properties.d_1);
+                                } else {
+                                    var index = selectedMunicipalities.indexOf(municipality.properties.d_1);
+                                    if (index !== -1) {
+                                        selectedMunicipalities.splice(index, 1);
+                                    }
+                                }
+                            });
+                        });
+                    }
+                }
+                submitButton.disabled = true //submit button disabled 
+                var municipalityForm = document.getElementById('municipality-form');
+
+                // Add  event listener to the form to handle checkbox changes
+                municipalityForm.addEventListener('change', function () {
+                    var checkedCheckboxes = this.querySelectorAll('input[name="municipality"]:checked');
+                    submitButton.disabled = checkedCheckboxes.length < 2; //submit button disabled if less than 2 selected municipalities
+                });
+                //Functions to call when submit is pressed
+                submitButton.addEventListener('click', function () {
+
+
+                    
+                    hideSelectedItems();
+                    updateChoropleth();
+                    updateSelectedMunicipalitiesList(selectedMunicipalities);
+
+                   
+
+                });
+
+
+
+
+                // Event listener for search input
+                searchInput.addEventListener('input', function () {
+                    var searchText = this.value;
+                    showAllItems();
+                    generateCheckboxes(searchText);
+                });
+
+                // Event listener for attribute selection
+                var dropdownTrigger = document.querySelector('.dropdown-trigger');
+                var dropdownMenu = document.querySelector('.dropdown-menu');
+                var circles = document.querySelectorAll('.circle');
+
+                dropdownTrigger.addEventListener('click', function () {
+                    dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+                });
+
+                circles.forEach(function (circle) {
+                    circle.addEventListener('click', function () {
+                        circles.forEach(function (c) {
+                            c.classList.remove('active');
+                        });
+
+                        this.classList.add('active');
+
+                        var attribute = this.id.split('-')[0];
+                        var thresholds = getColorThresholds(attribute);
+                        var colorScale = getColorScale(attribute);
+
+                        geojsonLayer.eachLayer(function (layer) {
+                            layer.setStyle({
+                                fillColor: getColor(layer.feature.properties[attribute], thresholds, colorScale)
+                            });
+                        });
+                        updateLegend(attribute);
+
+                    });
+                });
+
+
+
+
+                //CSV PAGE
+                function viewCSVPage() {
+                    var selectedMunicipalities = Array.from(document.querySelectorAll('input[name="municipality"]:checked')).map(function (checkbox) {
+                        return checkbox.value;
+                    });
+
+                    var url = '/csv?municipalities=' + encodeURIComponent(selectedMunicipalities.join(','));
+                    window.open(url, '_blank'); // Open the CSV URL 
+                }
+                var csvButton = document.getElementById('csv-button');
+                csvButton.addEventListener('click', viewCSVPage);
+
+
+
+
+                // Update map based on the selected checkboxes
+                function updateChoropleth() {
+
+
+                    // Filter the GeoJSON features based on the selected municipalities
+                    var filteredFeatures = data.features.filter(function (feature) {
+                        return selectedMunicipalities.includes(feature.properties.d_1);
+                    });
+
+                    // Create a new GeoJSON layer with the filtered features
+                    var filteredLayer = L.geoJSON(filteredFeatures, {
+                        style: style,
+                        onEachFeature: function (feature, layer) {
+                            layer.on('mouseover', function () {
+                                var attribute = document.querySelector('.circle.active').id.split('-')[0];
+                                var value = feature.properties[attribute];
+                                var rank = selectedMunicipalitiesRankData.find(function (data) {
+                                    return data.municipality === feature.properties.d_1;
+                                });
+
+                                if (attributeLabels.hasOwnProperty(attribute)) {
+                                    var label = attributeLabels[attribute];
+                                    var tooltipText = '<b>' + feature.properties.d_1 + '</b><br>' + label + ': ';
+                                    if (attribute === "rank") {
+                                        tooltipText += rank.rank;
+                                    } else {
+                                        tooltipText += value;
+                                    }
+                                    layer.bindTooltip(tooltipText);
+                                } else {
+                                    layer.bindTooltip('Invalid attribute');
+                                }
+
+                                layer.openTooltip();
+                            });
+
+                            layer.on('mouseout', function () {
+                                layer.setStyle({
+                                    weight: 1,
+                                    color: '#000'
+                                });
+
+                                layer.unbindTooltip();
+                            });
+
+                        }
+                    });
+
+                    // Remove previous GeoJSON layer from the map
+                    map.removeLayer(geojsonLayer);
+
+                    // Add filtered GeoJSON layer to the map
+                    filteredLayer.addTo(map);
+
+                    // Update global GeoJSON layer reference
+                    geojsonLayer = filteredLayer;
+
+
+                    if (selectedMunicipalities.length > 0) {
+                        csvButton.style.display = 'block';
+                    } else {
+                        csvButton.style.display = 'none';
+                    }
+                }
+
+                // Function to get the color thresholds for the currently selected attribute
+                function getColorThresholds(attribute) {
+                    return thresholds[attribute] || [];
+                }
+
+                function getColorScale(attribute) {
+                    return colorScales[attribute];
+                }
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+
+        function redirectToCSV() {
+            var selectedMunicipalities = Array.from(document.querySelectorAll('input[name="municipality"]:checked')).map(function (checkbox) {
+                return checkbox.value;
+            });
+
+        }
+
+        function getSelectedCheckboxes() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const checked = [];
+            checkboxes.forEach((checkbox) => {
+                if (checkbox.checked) {
+                    checked.push(checkbox.value);
+                }
+            });
+            return checked;
+        }
+        //Show the csv-button after the submit button is pressed
+        document.getElementById("submit-button").addEventListener("click", function () {
+            document.getElementById("csv-button").style.display = "block";
+        });
+        document.getElementById("csv-button").addEventListener("click", function () {
+            var selectedMunicipalities = getSelectedMunicipalities();
+            var url = "csv-page.html?municipalities=" + selectedMunicipalities.join();
+            window.location.href = url;
+        });
+
+
+
+
+        // Function to update the score data based on the selected municipalities
+
+        function updateSelectedMunicipalitiesList(selectedMunicipalities) {
+            var selectedMunicipalitiesList = document.getElementById('selected-municipalities');
+            selectedMunicipalitiesList.innerHTML = '';
+
+            // Fetch the rank data for the selected municipalities
+            fetch('/score_calc?municipalities=' + encodeURIComponent(selectedMunicipalities.join(',')))
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    
+                    selectedMunicipalitiesRankData = selectedMunicipalities.map(function (municipality) {
+                        var rankData = data.features.find(function (feature) {
+                            return feature.properties.d_1 === municipality;
+                        });
+
+                        var rank = rankData ? rankData.properties.rank : 'N/A';
+
+                        return { municipality: municipality, rank: rank };
+                    });
+
+                    // Sort based on rank
+                    selectedMunicipalitiesRankData.sort(function (a, b) {
+                        
+                        return parseInt(a.rank) - parseInt(b.rank);
+                    });
+
+                    // Display selected municipalities with their ranks
+                    selectedMunicipalitiesRankData.forEach(function (municipalityData) {
+                        var listItem = document.createElement('li');
+                        listItem.textContent = `${municipalityData.municipality} (Κατάταξη: ${municipalityData.rank})`;
+                        selectedMunicipalitiesList.appendChild(listItem);
+                    });
+                });
+        }
+        //info icons informations
+        var tooltipsContent = {
+            CO2: 'CO2(ετήσιοι τόνοι/τ.χλμ) από επιχειρήσεις και νοικοκυριά',
+            rank: 'Αποτελέσματα της πολυκριτήριας ανάλυσης για τους επιλεγμένους δήμους',
+            Evcs: 'Aπόφαση ΥΠΕΝ για αναλογία εγκατάστασης ενός σταθμού φόρτισης ανά χίλιους κατοίκους.Έχουν συνυπολογιστεί οι ήδη υπάρχοντες σταθμοί.',
+            distance_from_sea: 'Απόσταση του γεωμετρικού κέντρου κάθε δήμου από την θάλασσα (m)',
+            Companies: 'Αριθμός Επιχειρήσεων',
+            mun_category: 'Μικρή τιμή σημαίνει μεγαλύτερα έξοδα εγκατάστασης και συντήρησης σταθμών φόρτισης Η/Ο',
+            hotels: 'Αριθμός κλινών ξενοδοχείων',
+            gas: 'Ελάχιστη τιμή βενζίνης',
+            finance: 'Πρόγραμμα <<Φορτίζω Παντού>>, παροχή οικονομικών κινήτρων για την υλοποίηση σταθμών φόρτισης Η/Ο',
+            airports: 'Ύπαρξη λιμανιού ή/και αεροδρομίου',
+            houses: 'Αριθμός Πολυκατοικιών'
+
+        };
+        // Event listener for all info icons
+        var infoIcons = document.querySelectorAll('.info-icon');
+        infoIcons.forEach(function (infoIcon) {
+            infoIcon.addEventListener('mouseover', function () {
+                var tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                var attribute = this.getAttribute('data-attribute');
+                tooltip.textContent = tooltipsContent[attribute];
+                this.appendChild(tooltip);
+            });
+
+            infoIcon.addEventListener('mouseout', function () {
+                var tooltip = document.querySelector('.tooltip');
+                if (tooltip) {
+                    tooltip.parentNode.removeChild(tooltip);
+                }
+            });
+        });
+
+
+    </script>
+
+</body>
+
+</html>

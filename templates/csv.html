@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Δεδομένα επιλεγμένων Δήμων και Κατάταξη</title>
+</head>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    h1 {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        margin-left: 10px;
+        padding-bottom: 20px;
+    }
+
+    form {
+        margin-bottom: 20px;
+        margin-left: 20px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    select,
+    input[type="number"] {
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    button {
+        display: inline-block;
+        margin-right: 10px;
+        margin-left: 20px;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: #fff;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #0062cc;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 70%;
+        margin-top: 20px;
+        margin-left: 20px;
+
+    }
+
+    th,
+    td {
+        text-align: left;
+        padding: 8px;
+
+    }
+
+    th {
+        background-color: #007bff;
+        color: #fff;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+
+    .row {
+        display: flex;
+    }
+
+    .row div {
+        flex-basis: 25%;
+    }
+
+    .criteria-button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+</style>
+
+<body>
+    <h1>Δεδομένα επιλεγμένων Δήμων και Κατάταξη</h1>
+    <form method="GET" action="/csv">
+        {% for row in range(2) %}
+        <div class="row">
+            {% for col in range(5) %}
+            {% set index = row * 5 + col %}
+            <div>
+                <label for="w{{ index+1 }}">w{{ index+1 }}:</label>
+                <input type="number" name="w{{ index+1 }}" step="0.001" value="{{ w_defaults[index] }}">
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        <span id="sum">Άθροισμα: 1.000</span>
+
+        <input type="hidden" name="municipalities" value="{{ ','.join(municipalities) }}">
+        <input type="submit" value="Ανανέωση" id="updateButton">
+    </form>
+    <button type="button" onclick="downloadCSV()">Λήψη αρχείου CSV</button>
+    <button type="button" onclick="resetWeights()">Προεπιλεγμένα Βάρη</button>
+    <button onclick="goToSensitivityAnalysis()">Ανάλυση Ευαισθησίας</button>
+    <button class="criteria-button" onclick="criteriaInformations()">Πληροφορίες Κριτηρίων</button>
+
+
+    <br>
+
+
+
+
+
+    {% if data %}
+    {{ data|safe }}
+    {% else %}
+    <p>No data available</p>
+    {% endif %}
+    <script>
+        var defaultWeights = [
+            0.11,
+            0.035,
+            0.175,
+            0.145,
+            0.1,
+            0.04,
+            0.165,
+            0.05,
+            0.15,
+            0.03
+        ];
+
+        //Sensitivity Anallysis Button
+        function goToSensitivityAnalysis() {
+            var form = document.createElement("form");
+            form.method = "GET";
+            form.action = "{{ url_for('sensitivity_analysis') }}";
+
+            
+            var municipalitiesInput = document.createElement("input");
+            municipalitiesInput.type = "hidden";
+            municipalitiesInput.name = "municipalities";
+            municipalitiesInput.value = "{{ ','.join(municipalities) }}";
+            form.appendChild(municipalitiesInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        //Return to Default Weights
+        function resetWeights() {
+            var inputs = document.querySelectorAll('input[name^="w"]');
+            for (var i = 0; i < inputs.length; i++) {
+                inputs[i].value = defaultWeights[i];
+            }
+
+            updateSum(); // Update the sum after resetting the weights
+
+        }
+        //Check validate form 
+        function validateForm() {
+            // Get all the input weights
+            var inputs = document.querySelectorAll('input[name^="w"]');
+
+            var sum = 0;
+            for (var i = 0; i < inputs.length; i++) {
+                var value = parseFloat(inputs[i].value);
+                
+                if (isNaN(value) || value < 0 || value > 1) {
+                   
+                    return false; 
+                }
+                sum += value;
+            }
+
+            if (sum.toFixed(3) !== "1.000") {
+               
+                return false; 
+            }
+
+            return true; 
+        }
+
+        // Restrict negative numbers or numbers greater than 1
+        var inputFields = document.querySelectorAll('input[name^="w"]');
+        for (var i = 0; i < inputFields.length; i++) {
+            inputFields[i].addEventListener('input', function () {
+                if (this.value < 0) {
+                    this.value = 0;
+                } else if (this.value > 1) {
+                    this.value = 1;
+                }
+
+                updateSum(); // Update the sum when any input changes
+            });
+        }
+
+        // Calculate and display the sum
+        function updateSum() {
+            var inputs = document.querySelectorAll('input[name^="w"]');
+            var sum = 0;
+            for (var i = 0; i < inputs.length; i++) {
+                sum += parseFloat(inputs[i].value);
+            }
+            document.getElementById("sum").innerText = "Sum: " + sum.toFixed(3);
+
+            var updateButton = document.getElementById("updateButton");
+            var step = 0.0001; 
+            if (Math.abs(sum - 1) < step) {
+                updateButton.disabled = false;
+            } else {
+                updateButton.disabled = true;
+            }
+        }
+
+        //Download button
+        function downloadCSV() {
+            var rows = [];
+            var table = document.getElementsByTagName("table")[0];
+            var headers = [];
+            for (var i = 0; i < table.rows[0].cells.length; i++) {
+                headers[i] = table.rows[0].cells[i].innerHTML;
+            }
+            rows.push(headers);
+            for (var i = 1; i < table.rows.length; i++) {
+                var row = [];
+                for (var j = 0; j < table.rows[i].cells.length; j++) {
+                    row.push(table.rows[i].cells[j].innerHTML);
+                }
+                rows.push(row);
+            }
+            var csvContent = "data:text/csv;charset=utf-8,";
+            rows.forEach(function (rowArray) {
+                var row = rowArray.join(",");
+                csvContent += row + "\r\n";
+            });
+            var encodedUri = encodeURI(csvContent);
+            var link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "{{ informations }}_Δεδομένα_και_Κατάταξη.csv");
+            document.body.appendChild(link); 
+            link.click(); 
+        }
+        //Criteria information button
+        function criteriaInformations() {
+            window.location.href = "Πληροφορίες_Κριτηρίων";
+        }
+
+    </script>
+</body>
+
+</html>

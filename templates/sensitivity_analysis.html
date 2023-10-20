@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>ΑΝΑΛΥΣΗ ΕΥΑΙΣΘΗΣΙΑΣ </title>
+    <!-- Plotly library -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <div id="chart" style="text-align:center;"></div>
+    <div id="chart-description" style="text-align:center; margin-top: 20px;  margin-bottom: 20px;">
+        <p>Τα διαγράμματα δείχνουν την κατάταξη που μπορεί να πάρει ένας Δήμος για διαφορετικά βάρη.
+            Η μορφή box and whisker plot αποτελείται από 5 σημεία (min, q1, median, q3, max). Το min δέιχνει την
+            καλύτερη κατάταξη του Δήμου και η γραμμή από το q1 προς αυτό περιέχει το 25% όλων των συνδιασμών βαρών της
+            ανάλυσης.
+            Ανίστοιχα το max δείχνει την χειρότερη κατάταξη και η γραμμή από το q2 προς αυτό περίεχει επίσης το 25%.
+            Ανάμεσα στο q1 και στο q3 περιέχεται το 50% των συνδιασμών από τους οποίους το 25% βρίσκεται ανάμεσα στο q1
+            και το median ενώ το υπόλλοιπο 25% ανάμεσα στο median και το q3.
+            Οι κουκκίδες αντιπορσωπεύουν ακραίες τιμές και όταν υπάρχουν ότι ίσχυε για το min και το max ισχύει
+            αντίστοιχα για το lower fence και το upper fence.
+            Οι Δήμοι που δεν παίρνουν την μορφή box and whisker, μένουν σταθεροί στην κατάταξη τους για κάθε συνδυασμό
+            βαρών οπότε αναπαρίστανται με μόνο μια γραμμή και με κουκκίδες αν έχουν ακραίες τιμές. </p>
+    </div>
+
+
+    <script>
+       
+        var graphJson = JSON.parse('{{ graph_json | safe }}');
+
+        
+        Plotly.newPlot('chart', graphJson.data, graphJson.layout);
+    </script>
+</body>
+
+</html>
