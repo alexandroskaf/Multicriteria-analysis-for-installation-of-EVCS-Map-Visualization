@@ -265,7 +265,7 @@ def score_calc():
 
     municipalities = request.args.get('municipalities', '').split(',')
 
-    # Set default weights (you can change them as needed)
+    # Set default weights 
     default_weights = [0.11, 0.035, 0.175, 0.145,
                        0.1, 0.04, 0.165, 0.05, 0.15, 0.03]
 
