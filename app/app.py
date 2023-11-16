@@ -15,7 +15,7 @@ def index():
 
 
 # Read Data
-data = pd.read_csv('municipalities_criteria_values.csv', delimiter=';')
+data = pd.read_csv('app/municipalities_criteria_values.csv', delimiter=';')
 for column in data.columns:
     if data[column].dtype == 'float64':
         data[column] = data[column].apply(lambda x: round(x, 2))
@@ -174,7 +174,7 @@ def sensitivity_analysis():
 
     # Read the Weights
 
-    data_df = pd.read_csv('sensitivity_analysis_weights.csv', delimiter=';')
+    data_df = pd.read_csv('app/sensitivity_analysis_weights.csv', delimiter=';')
 
     # Get selected municipalities from the request
     municipalities = request.args.get('municipalities', '').split(',')
@@ -273,7 +273,7 @@ def score_calc():
     merged_df = result['merged_df']
 
     # Read and merge geojson based on municipality name
-    df = gpd.read_file('file.geojson')
+    df = gpd.read_file('app/file.geojson')
     merged = df.merge(merged_df, on='d_1')
     merged_json = merged.to_json()
     merged_geojson = json.loads(merged_json)
