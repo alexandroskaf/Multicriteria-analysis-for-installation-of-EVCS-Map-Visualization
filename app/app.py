@@ -9,7 +9,6 @@ from plotly.subplots import make_subplots
 
 app = Flask(__name__)
 
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -21,9 +20,8 @@ for column in data.columns:
     if data[column].dtype == 'float64':
         data[column] = data[column].apply(lambda x: round(x, 2))
 
+
 # PROMETHEE II
-
-
 def calculate_score(municipalities):
 
     if len(municipalities) > 1:
@@ -221,9 +219,8 @@ def sensitivity_analysis():
 
     return render_template('sensitivity_analysis.html', graph_json=graph_json)
 
+
 # Criteria Information and Ranks Page Handler
-
-
 @app.route('/csv', methods=['GET', 'POST'])
 def csv_page():
 
@@ -283,9 +280,8 @@ def score_calc():
 
     return jsonify(merged_geojson)
 
-  # Criteria Information Page
 
-
+# Criteria Information Page
 @app.route('/Πληροφορίες_Κριτηρίων')
 def new_page():
     return render_template('criteria_information.html')
