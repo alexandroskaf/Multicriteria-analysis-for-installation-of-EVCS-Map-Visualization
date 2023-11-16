@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
 
-# ENV GDAL_CONFIG=/opt/homebrew/bin/gdal-config
+
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r requirements.txt
 
