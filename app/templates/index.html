@@ -833,13 +833,6 @@
                 console.log(error);
             });
 
-        function redirectToCSV() {
-            var selectedMunicipalities = Array.from(document.querySelectorAll('input[name="municipality"]:checked')).map(function (checkbox) {
-                return checkbox.value;
-            });
-
-        }
-
         function getSelectedCheckboxes() {
             const checkboxes = document.querySelectorAll('input[type="checkbox"]');
             const checked = [];
