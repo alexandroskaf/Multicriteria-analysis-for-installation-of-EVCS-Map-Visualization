@@ -169,7 +169,7 @@ def take_ranks(municipalities, weights):
 # Sensitivity Analysis
 
 
-@app.route('/sensitivity_analysis', methods=['GET', 'POST'])
+@app.route('/sensitivity_analysis', methods=['GET'])
 def sensitivity_analysis():
 
     # Read the Weights
@@ -221,7 +221,7 @@ def sensitivity_analysis():
 
 
 # Criteria Information and Ranks Page Handler
-@app.route('/csv', methods=['GET', 'POST'])
+@app.route('/csv', methods=['GET'])
 def csv_page():
 
     municipalities = request.args.get('municipalities', '').split(',')
@@ -257,7 +257,7 @@ def csv_page():
     return render_template('csv.html', data=rendered_table, w_defaults=w_defaults, municipalities=municipalities)
 
 
-@app.route('/score_calc', methods=['GET', 'POST'])
+@app.route('/score_calc', methods=['GET'])
 def score_calc():
 
     municipalities = request.args.get('municipalities', '').split(',')
