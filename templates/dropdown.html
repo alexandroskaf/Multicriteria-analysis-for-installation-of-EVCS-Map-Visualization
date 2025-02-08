@@ -1,0 +1,106 @@
+<div class="dropdown">
+    <span class="dropdown-trigger"><i class="fas fa-bars fa-2x"></i></span>
+
+    <div class="dropdown-menu">
+        <div class="circle-container">
+            <span class="circle active" id="Evcs"></span>
+            <span id="Evcs">Σταθμοί Φόρτισης Η/Ο</span>
+            <span class="info-icon" data-attribute="Evcs">!</span>
+        </div>
+
+        <div class="circle-container">
+            <span class="circle" id="CO2(tons/km^2)-circle"></span>
+            <span id="CO2(tons/km^2)-label">CO2(ετήσιοι τόνοι/τ.χλμ)</span>
+            <span class="info-icon" data-attribute="CO2">!</span>
+        </div>
+
+        <div class="circle-container">
+            <span class="circle" id="Companies-circle"></span>
+            <span id="Companies-label">Επιχειρήσεις</span>
+            <span class="info-icon" data-attribute="Companies">!</span>
+        </div>
+
+        <div class="circle-container">
+            <span class="circle" id="distance_from_sea-circle"></span>
+            <span id="distance_from_sea-label">Αποστ. απο θάλασσα(μέτρα)</span>
+            <span class="info-icon" data-attribute="distance_from_sea">!</span>
+        </div>
+
+        <div class="circle-container">
+            <span class="circle" id="mun_category"></span>
+            <span id="mun_category">Κόστος Εγκατάστασης και Συντήρησης</span>
+            <span class="info-icon" data-attribute="mun_category">!</span>
+        </div>
+
+        <div class="circle-container">
+            <span class="circle" id="Airports"></span>
+            <span id="Airports">Λιμάνια/Αεροδρόμια</span>
+            <span class="info-icon" data-attribute="airports">!</span>
+        </div>
+
+        <div class="circle-container">
+            <span class="circle" id="Finance"></span>
+            <span id="Finance">Επιδοτήσεις(€)</span>
+            <span class="info-icon" data-attribute="finance">!</span>
+        </div>
+
+        <div class="circle-container">
+            <span class="circle" id="Hotels"></span>
+            <span id="Hotels">Κλίνες ξενοδοχείων</span>
+            <span class="info-icon" data-attribute="hotels">!</span>
+        </div>
+
+        <div class="circle-container">
+            <span class="circle" id="Gas"></span>
+            <span id="Gas">Tιμή Βενζίνης(€)</span>
+            <span class="info-icon" data-attribute="gas">!</span>
+        </div>
+
+        <div class="circle-container">
+            <span class="circle" id="Houses"></span>
+            <span id="Houses">Πολυκατοικίες</span>
+            <span class="info-icon" data-attribute="houses">!</span>
+        </div>
+
+        <div class="circle-container">
+            <span class="circle" id="rank-circle"></span>
+            <span id="rank-label">Κατάταξη</span>
+            <span class="info-icon" data-attribute="rank">!</span>
+        </div>
+    </div>
+</div>
+<script>
+//info icons informations
+        var tooltipsContent = {
+            CO2: 'CO2(ετήσιοι τόνοι/τ.χλμ) από επιχειρήσεις και νοικοκυριά',
+            rank: 'Αποτελέσματα της πολυκριτήριας ανάλυσης για τους επιλεγμένους δήμους',
+            Evcs: 'Aπόφαση ΥΠΕΝ για αναλογία εγκατάστασης ενός σταθμού φόρτισης ανά χίλιους κατοίκους.Έχουν συνυπολογιστεί οι ήδη υπάρχοντες σταθμοί.',
+            distance_from_sea: 'Απόσταση του γεωμετρικού κέντρου κάθε δήμου από την θάλασσα (m)',
+            Companies: 'Αριθμός Επιχειρήσεων',
+            mun_category: 'Μικρή τιμή σημαίνει μεγαλύτερα έξοδα εγκατάστασης και συντήρησης σταθμών φόρτισης Η/Ο',
+            hotels: 'Αριθμός κλινών ξενοδοχείων',
+            gas: 'Ελάχιστη τιμή βενζίνης',
+            finance: 'Πρόγραμμα <<Φορτίζω Παντού>>, παροχή οικονομικών κινήτρων για την υλοποίηση σταθμών φόρτισης Η/Ο',
+            airports: 'Ύπαρξη λιμανιού ή/και αεροδρομίου',
+            houses: 'Αριθμός Πολυκατοικιών'
+
+        };
+        // Event listener for all info icons
+        var infoIcons = document.querySelectorAll('.info-icon');
+        infoIcons.forEach(function (infoIcon) {
+            infoIcon.addEventListener('mouseover', function () {
+                var tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                var attribute = this.getAttribute('data-attribute');
+                tooltip.textContent = tooltipsContent[attribute];
+                this.appendChild(tooltip);
+            });
+
+            infoIcon.addEventListener('mouseout', function () {
+                var tooltip = document.querySelector('.tooltip');
+                if (tooltip) {
+                    tooltip.parentNode.removeChild(tooltip);
+                }
+            });
+        });
+        </script>
