@@ -15,7 +15,7 @@ def index():
 
 
 # Read Data
-data = pd.read_csv('~/Documents/app/municipalities_criteria_values.csv', delimiter=';')
+data = pd.read_csv('static/csv/municipalities_criteria_values.csv', delimiter=';')
 for column in data.columns:
     if data[column].dtype == 'float64':
         data[column] = data[column].apply(lambda x: round(x, 2))
@@ -174,7 +174,7 @@ def sensitivity_analysis():
 
     # Read the Weights
 
-    data_df = pd.read_csv('app/sensitivity_analysis_weights.csv', delimiter=';')
+    data_df = pd.read_csv('static/csv/sensitivity_analysis_weights.csv', delimiter=';')
 
     # Get selected municipalities from the request
     municipalities = request.args.get('municipalities', '').split(',')
